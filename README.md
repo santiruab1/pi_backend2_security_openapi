@@ -7,9 +7,11 @@ Una API REST completa desarrollada con Spring Boot para gestionar un sistema de 
 - **CRUD Completo**: Operaciones Create, Read, Update, Delete para todas las entidades
 - **Arquitectura en Capas**: Controladores, Servicios, Repositorios y Entidades
 - **Base de Datos**: Integración con PostgreSQL usando JPA/Hibernate
+- **Seguridad**: Autenticación HTTP Basic con Spring Security
+- **Documentación API**: OpenAPI/Swagger con interfaz interactiva
 - **Validaciones**: Bean Validation y validaciones de negocio personalizadas
 - **Manejo de Errores**: Respuestas de error consistentes y centralizadas
-- **Testing**: Endpoints de monitoreo con Spring Boot Actuator
+- **Monitoreo**: Endpoints de monitoreo con Spring Boot Actuator
 - **Documentación**: Tutorial completo paso a paso
 
 ## 📋 Requisitos Previos
@@ -152,13 +154,37 @@ curl http://localhost:8080/api/loans
 - `GET /actuator/info` - Información de la aplicación
 - `GET /actuator/metrics` - Métricas de la aplicación
 
+### 📖 Documentación API (`/swagger-ui`)
+- `GET /swagger-ui.html` - Interfaz interactiva de Swagger UI
+- `GET /v3/api-docs` - Especificación OpenAPI en formato JSON
+- `GET /v3/api-docs.yaml` - Especificación OpenAPI en formato YAML
+
 ## 🧪 Probar la API
 
-### Crear un Usuario
+### 🔐 Autenticación
+
+La API utiliza autenticación HTTP Basic. Credenciales de prueba:
+
+- **Admin**: `admin` / `admin123` (acceso completo)
+- **User**: `user` / `user123` (acceso limitado)
+
+### 📖 Swagger UI (Recomendado)
+
+La forma más fácil de probar la API es usando Swagger UI:
+
+1. Inicia la aplicación: `mvnw.cmd spring-boot:run`
+2. Abre tu navegador en: `http://localhost:8080/swagger-ui.html`
+3. Haz clic en **"Authorize"** e ingresa las credenciales
+4. Explora y prueba todos los endpoints interactivamente
+
+### 🔧 Usando cURL
+
+#### Crear un Usuario (requiere rol ADMIN)
 
 ```bash
 curl -X POST http://localhost:8080/api/users \
   -H "Content-Type: application/json" \
+  -H "Authorization: Basic YWRtaW46YWRtaW4xMjM=" \
   -d '{
     "username": "juan.perez",
     "email": "juan@example.com",
@@ -167,11 +193,12 @@ curl -X POST http://localhost:8080/api/users \
   }'
 ```
 
-### Crear un Artículo
+#### Crear un Artículo (requiere autenticación)
 
 ```bash
 curl -X POST http://localhost:8080/api/items \
   -H "Content-Type: application/json" \
+  -H "Authorization: Basic dXNlcjp1c2VyMTIz" \
   -d '{
     "name": "Laptop Dell",
     "description": "Laptop para desarrollo",
@@ -181,11 +208,12 @@ curl -X POST http://localhost:8080/api/items \
   }'
 ```
 
-### Crear un Préstamo
+#### Crear un Préstamo (requiere autenticación)
 
 ```bash
 curl -X POST http://localhost:8080/api/loans \
   -H "Content-Type: application/json" \
+  -H "Authorization: Basic dXNlcjp1c2VyMTIz" \
   -d '{
     "userId": 1,
     "itemId": 1,
@@ -217,8 +245,10 @@ Para aprender cómo se construyó este proyecto paso a paso, consulta la documen
 - [Repositorios](doc/05-repositorios-acceso-datos.md)
 - [Servicios](doc/06-servicios-logica-negocio.md)
 - [Controladores REST](doc/07-controladores-rest.md)
-- [Testing y Actuator](doc/08-testing-actuator.md)
+- [Monitoreo con Actuator](doc/08-actuator-monitoreo.md)
 - [Validaciones y Errores](doc/09-validacion-manejo-errores.md)
+- [Spring Security](doc/10-spring-security-implementacion.md)
+- [OpenAPI/Swagger](doc/11-openapi-swagger-documentacion.md)
 
 ## 🐛 Solución de Problemas
 
