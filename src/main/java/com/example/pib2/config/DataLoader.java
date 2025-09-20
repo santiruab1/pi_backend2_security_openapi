@@ -2,6 +2,8 @@ package com.example.pib2.config;
 
 import com.example.pib2.models.entities.User;
 import com.example.pib2.repositories.UserRepository;
+import com.example.pib2.models.entities.Company;
+import com.example.pib2.repositories.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +23,9 @@ public class DataLoader implements CommandLineRunner {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+        @Autowired
+        private CompanyRepository companyRepository;
 
     /**
      * Método que se ejecuta al iniciar la aplicación.
@@ -82,6 +87,33 @@ public class DataLoader implements CommandLineRunner {
             userRepository.save(john);
             System.out.println("Usuario USER creado: identification=11223344, password=john123");
         }
+
+            // Crear datos semillas para Company
+            if (!companyRepository.existsByIdentificationNumber("COMP001")) {
+                Company company1 = new Company();
+                company1.setName("Tech Solutions S.A.");
+                company1.setIdentificationNumber("COMP001");
+                company1.setAddress("Calle 123, Ciudad");
+                company1.setPhone("555-1234");
+                company1.setEmail("contacto@techsolutions.com");
+                company1.setCreatedAt(java.time.LocalDateTime.now());
+                company1.setUpdatedAt(java.time.LocalDateTime.now());
+                companyRepository.save(company1);
+                System.out.println("Company creada: COMP001");
+            }
+
+            if (!companyRepository.existsByIdentificationNumber("COMP002")) {
+                Company company2 = new Company();
+                company2.setName("Innovatech Ltda.");
+                company2.setIdentificationNumber("COMP002");
+                company2.setAddress("Avenida 456, Ciudad");
+                company2.setPhone("555-5678");
+                company2.setEmail("info@innovatech.com");
+                company2.setCreatedAt(java.time.LocalDateTime.now());
+                company2.setUpdatedAt(java.time.LocalDateTime.now());
+                companyRepository.save(company2);
+                System.out.println("Company creada: COMP002");
+            }
 
         System.out.println("\n=== CREDENCIALES DE PRUEBA ===");
         System.out.println("ADMIN: identification=12345678, password=admin123");
