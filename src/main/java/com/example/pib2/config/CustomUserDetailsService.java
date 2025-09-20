@@ -23,22 +23,21 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
 
     /**
-     * Carga un usuario por su username para autenticación.
+     * Carga un usuario por su identification para autenticación.
      * 
      * Este método es llamado automáticamente por Spring Security
      * durante el proceso de autenticación.
      * 
-     * @param username El nombre de usuario a buscar
+     * @param identification La identificación del usuario a buscar
      * @return UserDetails El objeto con los detalles del usuario
      * @throws UsernameNotFoundException Si el usuario no existe
      */
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
+    public UserDetails loadUserByUsername(String identification) throws UsernameNotFoundException {
+        User user = userRepository.findByIdentification(identification)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                    "Usuario no encontrado con username: " + username));
+                    "Usuario no encontrado con identification: " + identification));
         
-        // La entidad User ya implementa UserDetails, por lo que podemos retornarla directamente
         return user;
     }
 }

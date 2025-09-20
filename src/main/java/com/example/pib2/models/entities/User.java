@@ -12,12 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Entidad User que implementa UserDetails para integración con Spring Security.
- * 
- * Esta entidad representa un usuario del sistema con capacidades de autenticación
- * y autorización. Incluye roles para control de acceso basado en roles (RBAC).
- */
+
 @Entity
 @Data
 @EqualsAndHashCode(exclude = "loans")
@@ -29,17 +24,23 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String identification;
     
     @Column(unique = true, nullable = false)
     private String email;
     
-    @JsonIgnore // No exponer la contraseña en JSON
+    @JsonIgnore 
     @Column(nullable = false)
     private String password;
     
     @Column(nullable = false)
-    private String role; // ADMIN, USER
+    private String role; 
+    
+    @Column(nullable = false)
+    private String firstName;
+    
+    @Column(nullable = false)
+    private String lastName;
     
     @Column(nullable = false)
     private boolean enabled = true;
@@ -91,5 +92,11 @@ public class User implements UserDetails {
     @JsonIgnore
     public boolean isEnabled() {
         return enabled;
+    }
+    
+    @Override
+    @JsonIgnore
+    public String getUsername() {
+        return identification;
     }
 }

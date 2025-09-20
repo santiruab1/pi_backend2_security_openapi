@@ -37,16 +37,20 @@ public class UserController {
     private UserDTO toDTO(User user) {
         UserDTO dto = new UserDTO();
         dto.setId(user.getId());
-        dto.setUsername(user.getUsername());
+        dto.setIdentification(user.getIdentification());
         dto.setEmail(user.getEmail());
+        dto.setFirstName(user.getFirstName());
+        dto.setLastName(user.getLastName());
         return dto;
     }
 
     private User toEntity(UserDTO dto) {
         User user = new User();
         user.setId(dto.getId());
-        user.setUsername(dto.getUsername());
+        user.setIdentification(dto.getIdentification());
         user.setEmail(dto.getEmail());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
         return user;
     }
 
