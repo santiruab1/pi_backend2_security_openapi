@@ -30,6 +30,9 @@ public class DataLoader implements CommandLineRunner {
     private PasswordEncoder passwordEncoder;
 
         @Autowired
+        private com.example.pib2.repositories.DocumentRepository documentRepository;
+
+        @Autowired
         private CompanyRepository companyRepository;
 
     /**
@@ -120,6 +123,31 @@ public class DataLoader implements CommandLineRunner {
                 companyRepository.save(company2);
                 System.out.println("Company creada: COMP002");
             }
+
+                // Datos semillas para Document
+                if (documentRepository.findAll().isEmpty()) {
+                    com.example.pib2.models.entities.Document doc1 = new com.example.pib2.models.entities.Document();
+                    doc1.setDocumentTypeId(1);
+                    doc1.setDocumentDate(java.time.LocalDate.now().minusDays(10));
+                    doc1.setDocumentReception(java.time.LocalDate.now().minusDays(9));
+                    doc1.setDocumentPrefix("INV");
+                    doc1.setDocumentNumber("1001");
+                    doc1.setDocumentDueDate(java.time.LocalDate.now().plusDays(20));
+                    doc1.setThirdPartyId(1L);
+                    documentRepository.save(doc1);
+                    System.out.println("Documento de prueba creado: INV-1001");
+
+                    com.example.pib2.models.entities.Document doc2 = new com.example.pib2.models.entities.Document();
+                    doc2.setDocumentTypeId(2);
+                    doc2.setDocumentDate(java.time.LocalDate.now().minusDays(5));
+                    doc2.setDocumentReception(java.time.LocalDate.now().minusDays(4));
+                    doc2.setDocumentPrefix("FAC");
+                    doc2.setDocumentNumber("2002");
+                    doc2.setDocumentDueDate(java.time.LocalDate.now().plusDays(15));
+                    doc2.setThirdPartyId(2L);
+                    documentRepository.save(doc2);
+                    System.out.println("Documento de prueba creado: FAC-2002");
+                }
         }
 
     /**
