@@ -122,16 +122,6 @@ public class DataLoader implements CommandLineRunner {
             }
         }
 
-        // Crear centros de costo de ejemplo si no existen
-        createCostCenters();
-
-        System.out.println("\n=== CREDENCIALES DE PRUEBA ===");
-        System.out.println("ADMIN: identification=12345678, password=admin123");
-        System.out.println("USER: identification=87654321, password=user123");
-        System.out.println("USER: identification=11223344, password=john123");
-        System.out.println("================================\n");
-    }
-
     /**
      * Crea centros de costo de ejemplo si no existen en la base de datos.
      */
