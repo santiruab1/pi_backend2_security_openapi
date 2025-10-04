@@ -1,20 +1,16 @@
 package com.example.pib2.config;
 
 import com.example.pib2.models.entities.User;
+import com.example.pib2.models.entities.Warehouse;
 import com.example.pib2.models.entities.CostCenter;
 import com.example.pib2.repositories.UserRepository;
+import com.example.pib2.repositories.WarehouseRepository;
 import com.example.pib2.repositories.CostCenterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * Componente para cargar datos iniciales en la aplicación.
- * 
- * Esta clase se ejecuta al iniciar la aplicación y crea usuarios
- * de prueba con diferentes roles y centros de costo si no existen en la base de datos.
- */
 @Component
 public class DataLoader implements CommandLineRunner {
 
@@ -22,20 +18,17 @@ public class DataLoader implements CommandLineRunner {
     private UserRepository userRepository;
 
     @Autowired
+    private WarehouseRepository warehouseRepository;
+    
+    @Autowired
     private CostCenterRepository costCenterRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    /**
-     * Método que se ejecuta al iniciar la aplicación.
-     * 
-     * Crea usuarios de prueba con roles ADMIN y USER, y centros de costo
-     * de ejemplo si no existen en la base de datos.
-     */
     @Override
     public void run(String... args) throws Exception {
-        // Crear usuario ADMIN si no existe
+        // ... (Tu código para crear usuarios, sin cambios) ...
         if (userRepository.findByIdentification("12345678").isEmpty()) {
             User admin = new User();
             admin.setIdentification("12345678");
@@ -48,12 +41,10 @@ public class DataLoader implements CommandLineRunner {
             admin.setAccountNonExpired(true);
             admin.setAccountNonLocked(true);
             admin.setCredentialsNonExpired(true);
-            
             userRepository.save(admin);
             System.out.println("Usuario ADMIN creado: identification=12345678, password=admin123");
         }
 
-        // Crear usuario USER si no existe
         if (userRepository.findByIdentification("87654321").isEmpty()) {
             User user = new User();
             user.setIdentification("87654321");
@@ -66,12 +57,10 @@ public class DataLoader implements CommandLineRunner {
             user.setAccountNonExpired(true);
             user.setAccountNonLocked(true);
             user.setCredentialsNonExpired(true);
-            
             userRepository.save(user);
             System.out.println("Usuario USER creado: identification=87654321, password=user123");
         }
 
-        // Crear otro usuario USER de ejemplo
         if (userRepository.findByIdentification("11223344").isEmpty()) {
             User john = new User();
             john.setIdentification("11223344");
@@ -84,12 +73,30 @@ public class DataLoader implements CommandLineRunner {
             john.setAccountNonExpired(true);
             john.setAccountNonLocked(true);
             john.setCredentialsNonExpired(true);
-            
             userRepository.save(john);
             System.out.println("Usuario USER creado: identification=11223344, password=john123");
         }
 
+        // --- Código combinado para crear almacenes y centros de costo ---
+
+        // Crear almacenes de ejemplo si no existen
+        if (warehouseRepository.count() == 0) {
+            Warehouse warehouse1 = new Warehouse();
+            warehouse1.setName("Almacén Principal");
+            warehouse1.setLocation("Bogotá");
+
+            Warehouse warehouse2 = new Warehouse();
+            warehouse2.setName("Almacén Secundario");
+            warehouse2.setLocation("Medellín");
+
+            warehouseRepository.save(warehouse1);
+            warehouseRepository.save(warehouse2);
+
+            System.out.println("Almacenes de prueba creados.");
+        }
+
         // Crear centros de costo de ejemplo si no existen
+        // Reutiliza el método para evitar código duplicado
         createCostCenters();
 
         System.out.println("\n=== CREDENCIALES DE PRUEBA ===");
@@ -99,11 +106,8 @@ public class DataLoader implements CommandLineRunner {
         System.out.println("================================\n");
     }
 
-    /**
-     * Crea centros de costo de ejemplo si no existen en la base de datos.
-     */
     private void createCostCenters() {
-        // Centro de costo 1: Administración
+        // ... (Tu método para crear centros de costo, sin cambios) ...
         if (costCenterRepository.findByCode("ADM001").isEmpty()) {
             CostCenter adminCenter = new CostCenter();
             adminCenter.setCode("ADM001");
@@ -111,12 +115,9 @@ public class DataLoader implements CommandLineRunner {
             adminCenter.setActive(true);
             adminCenter.setCreatedBy("SYSTEM");
             adminCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(adminCenter);
             System.out.println("Centro de costo creado: ADM001 - Administración General");
         }
-
-        // Centro de costo 2: Ventas
         if (costCenterRepository.findByCode("VTA001").isEmpty()) {
             CostCenter salesCenter = new CostCenter();
             salesCenter.setCode("VTA001");
@@ -124,12 +125,9 @@ public class DataLoader implements CommandLineRunner {
             salesCenter.setActive(true);
             salesCenter.setCreatedBy("SYSTEM");
             salesCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(salesCenter);
             System.out.println("Centro de costo creado: VTA001 - Departamento de Ventas");
         }
-
-        // Centro de costo 3: Marketing
         if (costCenterRepository.findByCode("MKT001").isEmpty()) {
             CostCenter marketingCenter = new CostCenter();
             marketingCenter.setCode("MKT001");
@@ -137,12 +135,9 @@ public class DataLoader implements CommandLineRunner {
             marketingCenter.setActive(true);
             marketingCenter.setCreatedBy("SYSTEM");
             marketingCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(marketingCenter);
             System.out.println("Centro de costo creado: MKT001 - Marketing y Publicidad");
         }
-
-        // Centro de costo 4: Tecnología
         if (costCenterRepository.findByCode("TEC001").isEmpty()) {
             CostCenter techCenter = new CostCenter();
             techCenter.setCode("TEC001");
@@ -150,12 +145,9 @@ public class DataLoader implements CommandLineRunner {
             techCenter.setActive(true);
             techCenter.setCreatedBy("SYSTEM");
             techCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(techCenter);
             System.out.println("Centro de costo creado: TEC001 - Tecnología e Innovación");
         }
-
-        // Centro de costo 5: Recursos Humanos
         if (costCenterRepository.findByCode("RRHH001").isEmpty()) {
             CostCenter hrCenter = new CostCenter();
             hrCenter.setCode("RRHH001");
@@ -163,12 +155,9 @@ public class DataLoader implements CommandLineRunner {
             hrCenter.setActive(true);
             hrCenter.setCreatedBy("SYSTEM");
             hrCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(hrCenter);
             System.out.println("Centro de costo creado: RRHH001 - Recursos Humanos");
         }
-
-        // Centro de costo 6: Finanzas
         if (costCenterRepository.findByCode("FIN001").isEmpty()) {
             CostCenter financeCenter = new CostCenter();
             financeCenter.setCode("FIN001");
@@ -176,12 +165,9 @@ public class DataLoader implements CommandLineRunner {
             financeCenter.setActive(true);
             financeCenter.setCreatedBy("SYSTEM");
             financeCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(financeCenter);
             System.out.println("Centro de costo creado: FIN001 - Finanzas y Contabilidad");
         }
-
-        // Centro de costo 7: Operaciones (Inactivo para ejemplo)
         if (costCenterRepository.findByCode("OPR001").isEmpty()) {
             CostCenter operationsCenter = new CostCenter();
             operationsCenter.setCode("OPR001");
@@ -189,12 +175,9 @@ public class DataLoader implements CommandLineRunner {
             operationsCenter.setActive(false);
             operationsCenter.setCreatedBy("SYSTEM");
             operationsCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(operationsCenter);
             System.out.println("Centro de costo creado: OPR001 - Operaciones Generales (INACTIVO)");
         }
-
-        // Centro de costo 8: Atención al Cliente
         if (costCenterRepository.findByCode("ATC001").isEmpty()) {
             CostCenter customerCenter = new CostCenter();
             customerCenter.setCode("ATC001");
@@ -202,11 +185,9 @@ public class DataLoader implements CommandLineRunner {
             customerCenter.setActive(true);
             customerCenter.setCreatedBy("SYSTEM");
             customerCenter.setUpdatedBy("SYSTEM");
-            
             costCenterRepository.save(customerCenter);
             System.out.println("Centro de costo creado: ATC001 - Atención al Cliente");
         }
-
         System.out.println("Centros de costo de ejemplo cargados exitosamente.");
     }
 }
