@@ -14,6 +14,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
 
 /**
  * Configuración de Spring Security para la aplicación.
@@ -41,47 +45,47 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitar CSRF para APIs REST
-            .csrf(csrf -> csrf.disable())
-            
-            // Configurar autorización de requests
-            .authorizeHttpRequests(authz -> authz
-                // Endpoints públicos (sin autenticación)
-                .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                
-                // Endpoints de Swagger/OpenAPI (públicos)
-                .requestMatchers("/swagger-ui/**").permitAll()
-                .requestMatchers("/swagger-ui.html").permitAll()
-                .requestMatchers("/v3/api-docs/**").permitAll()
-                .requestMatchers("/swagger-resources/**").permitAll()
-                .requestMatchers("/webjars/**").permitAll()
-                
-                // Endpoints que requieren rol ADMIN
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-                .requestMatchers("/api/items/**").hasAnyRole("ADMIN", "USER")
-                
-                // Endpoints que requieren rol USER o ADMIN
-                .requestMatchers("/api/loans/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/api/loan-history/**").hasAnyRole("ADMIN", "USER")
-                
-                // Cualquier otro request requiere autenticación
-                .anyRequest().authenticated()
-            )
-            
-            // Configurar autenticación HTTP Basic
-            .httpBasic(basic -> basic.realmName("PI Backend API"))
-            
-            // Configurar política de sesión como stateless (para APIs REST)
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            
-            // Configurar headers para H2 Console (desarrollo)
-            .headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.sameOrigin())
-            );
-            
+                // Deshabilitar CSRF para APIs REST
+                .csrf(csrf -> csrf.disable())
+
+                // Configurar CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Configurar autorización de requests
+                .authorizeHttpRequests(authz -> authz
+                        // Endpoints públicos (sin autenticación)
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+
+                        // Endpoints de Swagger/OpenAPI (públicos)
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+
+                        // Endpoints que requieren rol ADMIN
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/items/**").hasAnyRole("ADMIN", "USER")
+
+                        // Endpoints que requieren rol USER o ADMIN
+                        .requestMatchers("/api/loans/**").hasAnyRole("ADMIN", "USER")
+                        .requestMatchers("/api/loan-history/**").hasAnyRole("ADMIN", "USER")
+
+                        // Cualquier otro request requiere autenticación
+                        .anyRequest().authenticated())
+
+                // Configurar autenticación HTTP Basic
+                .httpBasic(basic -> basic.realmName("PI Backend API"))
+
+                // Configurar política de sesión como stateless (para APIs REST)
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // Configurar headers para H2 Console (desarrollo)
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin()));
+
         return http.build();
     }
 
@@ -122,5 +126,56 @@ public class SecurityConfig {
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
+    }
+
+    /**
+     * Configuración de CORS para permitir solicitudes desde el frontend.
+     * 
+     * Permite solicitudes desde:
+     * - http://localhost:3000 (React, Vue, Angular en desarrollo)
+     * - http://127.0.0.1:3000 (alternativa localhost)
+     * - Cualquier puerto 3000-3009 para flexibilidad en desarrollo
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // Orígenes permitidos
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:300*", // Permite puertos 3000-3009
+                "http://127.0.0.1:300*", // Alternativa localhost
+                "http://localhost:3000", // Puerto específico más común
+                "http://127.0.0.1:3000" // Puerto específico más común
+        ));
+
+        // Métodos HTTP permitidos
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        // Headers permitidos
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"));
+
+        // Headers expuestos al cliente
+        configuration.setExposedHeaders(Arrays.asList(
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"));
+
+        // Permitir credenciales (cookies, headers de autorización)
+        configuration.setAllowCredentials(true);
+
+        // Tiempo de vida del preflight request (en segundos)
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return source;
     }
 }
