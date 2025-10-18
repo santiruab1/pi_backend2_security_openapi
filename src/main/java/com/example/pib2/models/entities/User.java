@@ -10,15 +10,16 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
-
+import java.util.Set;
 
 @Entity
 @Data
-@EqualsAndHashCode(exclude = "loans")
+@EqualsAndHashCode(exclude = {"loans", "userCompanies"})
 @Table(name = "users")
 public class User implements UserDetails {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -57,13 +58,12 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Loan> loans;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<UserCompany> userCompanies = new HashSet<>();
+
     
-    // Implementación de UserDetails
-    
-    /**
-     * Retorna las autoridades (roles) del usuario.
-     * Convierte el rol string en una GrantedAuthority con prefijo ROLE_.
-     */
     @Override
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
