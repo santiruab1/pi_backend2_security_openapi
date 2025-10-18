@@ -79,7 +79,7 @@ public class SecurityConfig {
             
             // Configurar headers para H2 Console (desarrollo)
             .headers(headers -> headers
-                .frameOptions().sameOrigin()
+                .frameOptions(frameOptions -> frameOptions.sameOrigin())
             );
             
         return http.build();
@@ -112,6 +112,9 @@ public class SecurityConfig {
      * 
      * Este proveedor utiliza el UserDetailsService personalizado
      * y el PasswordEncoder para validar credenciales.
+     * 
+     * Nota: En Spring Security 6.1+, se recomienda usar la configuración
+     * directamente en el SecurityFilterChain en lugar de un bean separado.
      */
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
