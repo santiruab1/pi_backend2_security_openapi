@@ -64,7 +64,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
 
-                        // Endpoints que requieren rol ADMIN
+                        // Endpoints de usuarios - POST público, resto requiere ADMIN
+                        .requestMatchers("/api/users", "/api/users/").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/items/**").hasAnyRole("ADMIN", "USER")
 
