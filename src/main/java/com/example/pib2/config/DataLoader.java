@@ -5,8 +5,11 @@ import com.example.pib2.models.entities.Warehouse;
 import com.example.pib2.models.entities.CostCenter;
 import com.example.pib2.models.entities.ThirdParty;
 import com.example.pib2.repositories.UserRepository;
+import com.example.pib2.models.entities.Company;
+import com.example.pib2.repositories.CompanyRepository;
 import com.example.pib2.repositories.WarehouseRepository;
 import com.example.pib2.repositories.CostCenterRepository;
+import com.example.pib2.repositories.DocumentRepository;
 import com.example.pib2.repositories.ThirdPartyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -15,7 +18,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class DataLoader implements CommandLineRunner {
-
     @Autowired
     private UserRepository userRepository;
 
@@ -26,6 +28,10 @@ public class DataLoader implements CommandLineRunner {
     private CostCenterRepository costCenterRepository;
 
     @Autowired
+    private CompanyRepository companyRepository;
+
+    @Autowired
+    private DocumentRepository documentRepository;
     private ThirdPartyRepository thirdPartyRepository;
 
     @Autowired
@@ -82,6 +88,19 @@ public class DataLoader implements CommandLineRunner {
             System.out.println("Usuario USER creado: identification=11223344, password=john123");
         }
 
+            // Crear datos semillas para Company
+            if (!companyRepository.existsByIdentificationNumber("COMP001")) {
+                Company company1 = new Company();
+                company1.setName("Tech Solutions S.A.");
+                company1.setIdentificationNumber("COMP001");
+                company1.setAddress("Calle 123, Ciudad");
+                company1.setPhone("555-1234");
+                company1.setEmail("contacto@techsolutions.com");
+                company1.setCreatedAt(java.time.LocalDateTime.now());
+                company1.setUpdatedAt(java.time.LocalDateTime.now());
+                companyRepository.save(company1);
+                System.out.println("Company creada: COMP001");
+            }
         // --- Código combinado para crear almacenes y centros de costo ---
 
         // Crear almacenes de ejemplo si no existen
@@ -104,12 +123,44 @@ public class DataLoader implements CommandLineRunner {
         // Reutiliza el método para evitar código duplicado
         createCostCenters();
 
-        System.out.println("\n=== CREDENCIALES DE PRUEBA ===");
-        System.out.println("ADMIN: identification=12345678, password=admin123");
-        System.out.println("USER: identification=87654321, password=user123");
-        System.out.println("USER: identification=11223344, password=john123");
-        System.out.println("================================\n");
-    }
+            if (!companyRepository.existsByIdentificationNumber("COMP002")) {
+                Company company2 = new Company();
+                company2.setName("Innovatech Ltda.");
+                company2.setIdentificationNumber("COMP002");
+                company2.setAddress("Avenida 456, Ciudad");
+                company2.setPhone("555-5678");
+                company2.setEmail("info@innovatech.com");
+                company2.setCreatedAt(java.time.LocalDateTime.now());
+                company2.setUpdatedAt(java.time.LocalDateTime.now());
+                companyRepository.save(company2);
+                System.out.println("Company creada: COMP002");
+            }
+
+                // Datos semillas para Document
+                if (documentRepository.findAll().isEmpty()) {
+                    com.example.pib2.models.entities.Document doc1 = new com.example.pib2.models.entities.Document();
+                    doc1.setDocumentTypeId(1);
+                    doc1.setDocumentDate(java.time.LocalDate.now().minusDays(10));
+                    doc1.setDocumentReception(java.time.LocalDate.now().minusDays(9));
+                    doc1.setDocumentPrefix("INV");
+                    doc1.setDocumentNumber("1001");
+                    doc1.setDocumentDueDate(java.time.LocalDate.now().plusDays(20));
+                    doc1.setThirdPartyId(1L);
+                    documentRepository.save(doc1);
+                    System.out.println("Documento de prueba creado: INV-1001");
+
+                    com.example.pib2.models.entities.Document doc2 = new com.example.pib2.models.entities.Document();
+                    doc2.setDocumentTypeId(2);
+                    doc2.setDocumentDate(java.time.LocalDate.now().minusDays(5));
+                    doc2.setDocumentReception(java.time.LocalDate.now().minusDays(4));
+                    doc2.setDocumentPrefix("FAC");
+                    doc2.setDocumentNumber("2002");
+                    doc2.setDocumentDueDate(java.time.LocalDate.now().plusDays(15));
+                    doc2.setThirdPartyId(2L);
+                    documentRepository.save(doc2);
+                    System.out.println("Documento de prueba creado: FAC-2002");
+                }
+        }
 
     private void createCostCenters() {
         // ... (Tu método para crear centros de costo, sin cambios) ...
