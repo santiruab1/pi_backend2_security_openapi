@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 /**
  * Controlador REST para la gestión de usuarios.
- * 
  * Proporciona endpoints para operaciones CRUD sobre usuarios.
  * Requiere autenticación y rol ADMIN para todos los endpoints.
  */
