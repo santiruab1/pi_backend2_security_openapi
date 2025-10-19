@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -35,6 +36,9 @@ public class SecurityConfig {
 
     @Autowired
     private UserDetailsService userDetailsService;
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Configura la cadena de filtros de seguridad.
@@ -64,6 +68,9 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
 
+                        // Endpoints de autenticación (públicos)
+                        .requestMatchers("/api/auth/login").permitAll()
+
                         // Endpoints de usuarios - POST público, resto requiere ADMIN
                         .requestMatchers("/api/users", "/api/users/").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
@@ -76,16 +83,16 @@ public class SecurityConfig {
                         // Cualquier otro request requiere autenticación
                         .anyRequest().authenticated())
 
-                // Configurar autenticación HTTP Basic
-                .httpBasic(basic -> basic.realmName("PI Backend API"))
-
                 // Configurar política de sesión como stateless (para APIs REST)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 // Configurar headers para H2 Console (desarrollo)
                 .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin()));
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin()))
+
+                // Agregar filtro JWT antes del filtro de autenticación por defecto
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
