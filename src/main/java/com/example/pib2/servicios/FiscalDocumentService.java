@@ -7,13 +7,16 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -22,6 +25,12 @@ public class FiscalDocumentService {
     @Autowired
     private FiscalDocumentRepository fiscalDocumentRepository;
 
+    // Formato específico para Fecha Emisión: dd-MM-yyyy (ej: 30-10-2025)
+    private static final DateTimeFormatter ISSUE_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    
+    // Formato específico para Fecha Recepción: dd-MM-yyyy HH:mm:ss (ej: 30-10-2025 14:30:45)
+    private static final DateTimeFormatter RECEPTION_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    
     private static final DateTimeFormatter[] DATE_FORMATTERS = {
             DateTimeFormatter.ofPattern("yyyy-MM-dd"),
             DateTimeFormatter.ofPattern("dd/MM/yyyy"),
@@ -30,6 +39,43 @@ public class FiscalDocumentService {
             DateTimeFormatter.ofPattern("yyyy/MM/dd")
     };
 
+    // Nombres esperados de las columnas en el orden correcto
+    private static final List<String> EXPECTED_COLUMNS = Arrays.asList(
+            "Tipo de Documento",
+            "CUFE/CUDE",
+            "Folio",
+            "Prefijo",
+            "Divisa",
+            "Forma de Pago",
+            "Medio de Pago",
+            "Fecha Emisión",
+            "Fecha Recepción",
+            "NIT Emisor",
+            "Nombre Emisor",
+            "NIT Receptor",
+            "Nombre Receptor",
+            "IVA",
+            "ICA",
+            "IC",
+            "INC",
+            "Timbre",
+            "INC Bolsas",
+            "IN Carbono",
+            "IN Combustibles",
+            "IC Datos",
+            "ICL",
+            "INPP",
+            "IBUA",
+            "ICUI",
+            "Rete IVA",
+            "Rete Renta",
+            "Rete ICA",
+            "Total",
+            "Estado",
+            "Grupo"
+    );
+
+    @Transactional
     public List<FiscalDocument> processExcelFile(MultipartFile file) throws Exception {
         List<FiscalDocument> documents = new ArrayList<>();
 
@@ -47,6 +93,9 @@ public class FiscalDocumentService {
 
         try (workbook) {
             Sheet sheet = workbook.getSheetAt(0);
+
+            // Validar los nombres de las columnas en el encabezado
+            validateHeader(sheet);
 
             // Saltar la primera fila (encabezados)
             int startRow = 1;
@@ -68,6 +117,75 @@ public class FiscalDocumentService {
         }
     }
 
+    /**
+     * Valida que los nombres de las columnas en el encabezado coincidan con los esperados
+     * @param sheet La hoja de Excel a validar
+     * @throws IllegalArgumentException Si las columnas no coinciden
+     */
+    private void validateHeader(Sheet sheet) {
+        Row headerRow = sheet.getRow(0);
+        if (headerRow == null) {
+            throw new IllegalArgumentException("El archivo Excel no contiene encabezados en la primera fila");
+        }
+
+        List<String> actualColumns = new ArrayList<>();
+        for (int i = 0; i < EXPECTED_COLUMNS.size(); i++) {
+            Cell cell = headerRow.getCell(i);
+            String columnName = getCellValueAsString(cell);
+            if (columnName == null || columnName.trim().isEmpty()) {
+                columnName = "";
+            } else {
+                columnName = columnName.trim();
+            }
+            actualColumns.add(columnName);
+        }
+
+        // Comparar columnas esperadas con las actuales
+        List<String> missingColumns = new ArrayList<>();
+        List<String> incorrectColumns = new ArrayList<>();
+
+        for (int i = 0; i < EXPECTED_COLUMNS.size(); i++) {
+            String expected = EXPECTED_COLUMNS.get(i);
+            String actual = actualColumns.size() > i ? actualColumns.get(i) : "";
+
+            if (actual.isEmpty()) {
+                missingColumns.add(String.format("Columna %d: '%s'", i + 1, expected));
+            } else if (!expected.equalsIgnoreCase(actual)) {
+                incorrectColumns.add(String.format("Columna %d: Se esperaba '%s' pero se encontró '%s'", 
+                    i + 1, expected, actual));
+            }
+        }
+
+        // Si hay errores, construir mensaje de error descriptivo
+        if (!missingColumns.isEmpty() || !incorrectColumns.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder(
+                "El archivo Excel no tiene la estructura correcta. Errores encontrados:\n\n");
+            
+            if (!incorrectColumns.isEmpty()) {
+                errorMessage.append("Columnas con nombres incorrectos:\n");
+                for (String error : incorrectColumns) {
+                    errorMessage.append("  - ").append(error).append("\n");
+                }
+                errorMessage.append("\n");
+            }
+
+            if (!missingColumns.isEmpty()) {
+                errorMessage.append("Columnas faltantes o vacías:\n");
+                for (String error : missingColumns) {
+                    errorMessage.append("  - ").append(error).append("\n");
+                }
+                errorMessage.append("\n");
+            }
+
+            errorMessage.append("Columnas esperadas en orden:\n");
+            for (int i = 0; i < EXPECTED_COLUMNS.size(); i++) {
+                errorMessage.append(String.format("  %d. %s\n", i + 1, EXPECTED_COLUMNS.get(i)));
+            }
+
+            throw new IllegalArgumentException(errorMessage.toString());
+        }
+    }
+
     private FiscalDocument mapRowToDocument(Row row) {
         try {
             FiscalDocument document = new FiscalDocument();
@@ -79,8 +197,8 @@ public class FiscalDocumentService {
             document.setCurrency(getCellValueAsString(row.getCell(4)));
             document.setPaymentForm(getCellValueAsString(row.getCell(5)));
             document.setPaymentMethod(getCellValueAsString(row.getCell(6)));
-            document.setIssueDate(getCellValueAsDate(row.getCell(7)));
-            document.setReceptionDate(getCellValueAsDate(row.getCell(8)));
+            document.setIssueDate(getCellValueAsIssueDate(row.getCell(7)));
+            document.setReceptionDate(getCellValueAsReceptionDate(row.getCell(8)));
             document.setIssuerNit(getCellValueAsString(row.getCell(9)));
             document.setIssuerName(getCellValueAsString(row.getCell(10)));
             document.setReceiverNit(getCellValueAsString(row.getCell(11)));
@@ -139,6 +257,115 @@ public class FiscalDocumentService {
                 return cell.getCellFormula();
             default:
                 return null;
+        }
+    }
+
+    /**
+     * Parsea la Fecha Emisión en formato dd-MM-yyyy (ej: 30-10-2025)
+     */
+    private LocalDate getCellValueAsIssueDate(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+
+        try {
+            switch (cell.getCellType()) {
+                case STRING:
+                    String dateString = cell.getStringCellValue().trim();
+                    if (dateString.isEmpty()) {
+                        return null;
+                    }
+                    // Intentar parsear con el formato específico dd-MM-yyyy
+                    try {
+                        return LocalDate.parse(dateString, ISSUE_DATE_FORMATTER);
+                    } catch (DateTimeParseException e) {
+                        // Si falla, intentar con otros formatos como fallback
+                        for (DateTimeFormatter formatter : DATE_FORMATTERS) {
+                            try {
+                                return LocalDate.parse(dateString, formatter);
+                            } catch (DateTimeParseException ex) {
+                                // Continuar con el siguiente formato
+                            }
+                        }
+                        System.err.println("No se pudo parsear la Fecha Emisión: " + dateString);
+                        return null;
+                    }
+                case NUMERIC:
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        return cell.getDateCellValue().toInstant()
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate();
+                    } else {
+                        // Intentar parsear como número de días desde 1900 (formato Excel)
+                        double numericValue = cell.getNumericCellValue();
+                        return org.apache.poi.ss.usermodel.DateUtil.getJavaDate(numericValue).toInstant()
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate();
+                    }
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            System.err.println("Error parseando Fecha Emisión: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Parsea la Fecha Recepción en formato dd-MM-yyyy HH:mm:ss (ej: 30-10-2025 14:30:45)
+     * Extrae solo la parte de la fecha para almacenarla como LocalDate
+     */
+    private LocalDate getCellValueAsReceptionDate(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+
+        try {
+            switch (cell.getCellType()) {
+                case STRING:
+                    String dateString = cell.getStringCellValue().trim();
+                    if (dateString.isEmpty()) {
+                        return null;
+                    }
+                    // Intentar parsear con el formato específico dd-MM-yyyy HH:mm:ss
+                    try {
+                        LocalDateTime dateTime = LocalDateTime.parse(dateString, RECEPTION_DATE_FORMATTER);
+                        return dateTime.toLocalDate();
+                    } catch (DateTimeParseException e) {
+                        // Si falla, intentar solo con la fecha dd-MM-yyyy
+                        try {
+                            return LocalDate.parse(dateString, ISSUE_DATE_FORMATTER);
+                        } catch (DateTimeParseException e2) {
+                            // Si falla, intentar con otros formatos como fallback
+                            for (DateTimeFormatter formatter : DATE_FORMATTERS) {
+                                try {
+                                    return LocalDate.parse(dateString, formatter);
+                                } catch (DateTimeParseException ex) {
+                                    // Continuar con el siguiente formato
+                                }
+                            }
+                            System.err.println("No se pudo parsear la Fecha Recepción: " + dateString);
+                            return null;
+                        }
+                    }
+                case NUMERIC:
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        return cell.getDateCellValue().toInstant()
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate();
+                    } else {
+                        // Intentar parsear como número de días desde 1900 (formato Excel)
+                        double numericValue = cell.getNumericCellValue();
+                        return org.apache.poi.ss.usermodel.DateUtil.getJavaDate(numericValue).toInstant()
+                                .atZone(java.time.ZoneId.systemDefault())
+                                .toLocalDate();
+                    }
+                default:
+                    return null;
+            }
+        } catch (Exception e) {
+            System.err.println("Error parseando Fecha Recepción: " + e.getMessage());
+            return null;
         }
     }
 
@@ -241,10 +468,12 @@ public class FiscalDocumentService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<FiscalDocument> getAllDocuments() {
         return fiscalDocumentRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public FiscalDocument getDocumentById(Long id) {
         return fiscalDocumentRepository.findById(id).orElse(null);
     }

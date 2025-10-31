@@ -26,6 +26,14 @@ public class FiscalDocumentController {
                 return ResponseEntity.badRequest().body("El archivo está vacío");
             }
 
+            // Validar tamaño máximo del archivo (512MB = 512 * 1024 * 1024 bytes)
+            long maxFileSize = 512L * 1024 * 1024; // 512MB
+            if (file.getSize() > maxFileSize) {
+                return ResponseEntity.badRequest()
+                        .body("El archivo excede el tamaño máximo permitido de 512MB. Tamaño actual: " +
+                                String.format("%.2f MB", file.getSize() / (1024.0 * 1024.0)));
+            }
+
             String filename = file.getOriginalFilename();
             if (filename == null || (!filename.endsWith(".xlsx") && !filename.endsWith(".xls"))) {
                 return ResponseEntity.badRequest().body("El archivo debe ser un Excel (.xlsx o .xls)");
