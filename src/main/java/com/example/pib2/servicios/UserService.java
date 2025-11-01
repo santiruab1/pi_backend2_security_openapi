@@ -21,6 +21,10 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    public Optional<User> findByIdentification(String identification) {
+        return userRepository.findByIdentification(identification);
+    }
+
     public User save(User user) {
         return userRepository.save(user);
     }

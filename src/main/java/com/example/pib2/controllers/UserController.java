@@ -5,6 +5,8 @@ import com.example.pib2.models.dtos.UserCreateDTO;
 import com.example.pib2.models.entities.User;
 import com.example.pib2.servicios.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -148,5 +150,69 @@ public class UserController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    // ==================== ENDPOINTS PARA GESTIÓN DE PERFIL PROPIO ====================
+    
+    @GetMapping("/me")
+    @Operation(summary = "Obtener perfil del usuario actual", description = "Retorna la información del usuario autenticado actualmente. No requiere rol ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil obtenido exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "401", description = "No autenticado - Token JWT requerido"),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+    })
+    public ResponseEntity<UserDTO> getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String identification = auth.getName();
+        
+        return userService.findByIdentification(identification)
+                .map(user -> ResponseEntity.ok(toDTO(user)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Actualizar perfil propio", description = "Permite al usuario actualizar su propia información de perfil. No requiere rol ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Perfil actualizado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDTO.class))),
+            @ApiResponse(responseCode = "401", description = "No autenticado - Token JWT requerido"),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
+    public ResponseEntity<UserDTO> updateCurrentUser(
+            @Parameter(description = "Nuevos datos del usuario", required = true) @RequestBody UserDTO userDTO) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String identification = auth.getName();
+        
+        return userService.findByIdentification(identification)
+                .map(existing -> {
+                    // Actualizar solo los campos permitidos
+                    existing.setIdentification(userDTO.getIdentification());
+                    existing.setEmail(userDTO.getEmail());
+                    existing.setFirstName(userDTO.getFirstName());
+                    existing.setLastName(userDTO.getLastName());
+                    
+                    User updated = userService.save(existing);
+                    return ResponseEntity.ok(toDTO(updated));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/me")
+    @Operation(summary = "Eliminar cuenta propia", description = "Permite al usuario eliminar su propia cuenta del sistema. No requiere rol ADMIN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Cuenta eliminada exitosamente"),
+            @ApiResponse(responseCode = "401", description = "No autenticado - Token JWT requerido"),
+            @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+    })
+    public ResponseEntity<Void> deleteCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String identification = auth.getName();
+        
+        return userService.findByIdentification(identification)
+                .map(user -> {
+                    userService.deleteById(user.getId());
+                    return ResponseEntity.noContent().<Void>build();
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }
