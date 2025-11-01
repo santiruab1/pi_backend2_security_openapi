@@ -71,8 +71,9 @@ public class SecurityConfig {
                         // Endpoints de autenticación (públicos)
                         .requestMatchers("/api/auth/login").permitAll()
 
-                        // Endpoints de usuarios - POST público, resto requiere ADMIN
+                        // Endpoints de usuarios - POST público, /me para usuarios autenticados, resto requiere ADMIN
                         .requestMatchers("/api/users", "/api/users/").permitAll()
+                        .requestMatchers("/api/users/me").hasAnyRole("ADMIN", "USER")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/items/**").hasAnyRole("ADMIN", "USER")
 
