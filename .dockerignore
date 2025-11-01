@@ -1,0 +1,38 @@
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentación
+doc/
+*.md
+!README.md
+
+# Tests
+src/test/
+
+# Variables de entorno locales
+.env
+.env.local
+
+# Archivos temporales
+*.log
+*.tmp
+*.temp
+
